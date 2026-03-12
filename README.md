@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel de Analise - Look & RJ</title>
+    <title>Analista Look & RJ</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         :root { --primary: #00B285; --dark-bg: #0d1117; --card-bg: #161b22; }
@@ -14,18 +14,18 @@
         .atrasado { color: #f85149; font-size: 1.5rem; font-weight: bold; }
         .viciada { color: #f1e05a; font-size: 1.5rem; font-weight: bold; }
         .milhar-sugerida { font-size: 1.8rem; background: #0d1117; border: 2px dashed var(--primary); margin: 10px 0; border-radius: 10px; text-align: center; color: #58a6ff; font-family: monospace; }
-        #historico { max-height: 200px; overflow-y: auto; font-size: 0.9rem; border-top: 1px solid #30363d; margin-top: 10px; padding-top: 10px; color: #8b949e; }
+        #historico { max-height: 150px; overflow-y: auto; font-size: 0.9rem; border-top: 1px solid #30363d; margin-top: 10px; padding-top: 10px; color: #8b949e; }
         input, select { background-color: #0d1117 !important; border: 1px solid #30363d !important; color: white !important; }
     </style>
 </head>
 <body>
 
-<div class="app-header text-white">
-    <h3 class="mb-0">MEU ANALISTA LOOK/RJ</h3>
-    <small>Foco: Grupos Atrasados e Dezenas Viciadas</small>
+<div class="app-header">
+    <h3 class="mb-0 text-white">MEU ANALISTA LOOK/RJ</h3>
+    <small class="text-white">Foco: Grupos Atrasados e Dezenas Viciadas</small>
 </div>
 
-<div class="container mt-2">
+<div class="container">
     <div class="card-custom">
         <h6 class="text-success mb-3">NOVO RESULTADO</h6>
         <div class="row g-2">
@@ -42,8 +42,8 @@
                 <button onclick="registrar()" class="btn btn-acao">SALVAR NO SISTEMA</button>
             </div>
         </div>
-        <div id="historico text-center">
-            <div id="lista" class="mt-2"></div>
+        <div id="historico">
+            <div id="lista"></div>
         </div>
     </div>
 
@@ -66,7 +66,7 @@
         <h6 class="text-primary fw-bold text-center">PALPITE CRUZADO</h6>
         <button onclick="analisar()" class="btn btn-outline-info w-100 mb-3">GERAR MILHARES DO PRÓXIMO PRÊMIO</button>
         <div id="resultado_cruzamento">
-            <p class="text-muted small text-center italic">Alimente o sistema com os resultados anteriores para gerar o cruzamento.</p>
+            <p class="text-muted small text-center italic">Insira resultados para cruzar.</p>
         </div>
     </div>
 </div>
@@ -77,7 +77,7 @@
     function registrar() {
         let mVal = document.getElementById('milhar').value;
         let bVal = document.getElementById('banca').value;
-        if(mVal.length < 2) return alert("Digite ao menos a dezena!");
+        if(mVal.length < 2) { alert("Digite ao menos a dezena!"); return; }
 
         let milharCompleta = mVal.padStart(4, '0');
         let dezena = milharCompleta.slice(-2);
@@ -90,15 +90,12 @@
     }
 
     function atualizarApp() {
-        // Atualiza Lista Visual
         document.getElementById('lista').innerHTML = bancoDados.map(d => `<div>• [${d.banca}] <b>${d.milhar}</b> (G${d.grupo})</div>`).reverse().join('');
         
-        // Cálculo de Atrasados
-        let gruposQueSairam = [...new Set(bancoDados.map(d => d.grupo))];
-        let atrasados = Array.from({length: 25}, (_, i) => i + 1).filter(g => !gruposQueSairam.includes(g));
-        document.getElementById('g_atrasados').innerHTML = atrasados.length > 0 ? atrasados.slice(0, 3).join(', ') : "Todos saíram";
+        let sairam = [...new Set(bancoDados.map(d => d.grupo))];
+        let atrasados = Array.from({length: 25}, (_, i) => i + 1).filter(g => !sairam.includes(g));
+        document.getElementById('g_atrasados').innerHTML = atrasados.length > 0 ? atrasados.slice(0, 3).join(', ') : "OK";
 
-        // Cálculo de Viciadas (Dezenas)
         let f = {};
         bancoDados.forEach(d => f[d.dezena] = (f[d.dezena] || 0) + 1);
         let ordenadas = Object.keys(f).sort((a,b) => f[b] - f[a]);
@@ -106,26 +103,22 @@
     }
 
     function analisar() {
-        if(bancoDados.length < 1) return alert("Registre ao menos um resultado primeiro.");
+        if(bancoDados.length < 1) { alert("Registre um resultado primeiro."); return; }
         
-        // Pega o bicho mais atrasado do sistema
-        let gruposQueSairam = [...new Set(bancoDados.map(d => d.grupo))];
-        let atrasadoAlvo = Array.from({length: 25}, (_, i) => i + 1).filter(g => !gruposQueSairam.includes(g))[0] || 1;
+        let sairam = [...new Set(bancoDados.map(d => d.grupo))];
+        let atrasadoAlvo = Array.from({length: 25}, (_, i) => i + 1).filter(g => !sairam.includes(g))[0] || 1;
         
-        // Tendência de milhar (primeiro dígito que mais sai)
         let mf = {};
         bancoDados.forEach(d => mf[d.milInic] = (mf[d.milInic] || 0) + 1);
         let mil_pref = Object.keys(mf).sort((a,b) => mf[b] - mf[a])[0];
 
-        // Dezenas do bicho atrasado
         let dez1 = (atrasadoAlvo * 4).toString().padStart(2, '0');
         let dez2 = (atrasadoAlvo * 4 - 3).toString().padStart(2, '0');
 
         document.getElementById('resultado_cruzamento').innerHTML = `
-            <div class="text-center mb-1">Grupo Atrasado Detectado: <span class="text-white fw-bold">${atrasadoAlvo}</span></div>
+            <div class="text-center mb-1">Alvo (Atrasado): <b>${atrasadoAlvo}</b></div>
             <div class="milhar-sugerida">${mil_pref}${Math.floor(Math.random()*9)}${dez1}</div>
             <div class="milhar-sugerida">${mil_pref}${Math.floor(Math.random()*9)}${dez2}</div>
-            <small class="text-center d-block text-muted">Baseado na tendência do dígito inicial <b>${mil_pref}</b></small>
         `;
     }
 </script>
